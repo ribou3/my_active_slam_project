@@ -39,7 +39,7 @@ def Additional_rewards_uncertainty():
 
         return r
     except rospy.ROSException:
-        print("Failed to receive message within {} seconds.".format(timeout_seconds))
+        print(("Failed to receive message within {} seconds.".format(timeout_seconds)))
         # Handle the timeout case here
         r = 0
         return r 

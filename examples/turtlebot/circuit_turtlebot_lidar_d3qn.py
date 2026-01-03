@@ -8,7 +8,7 @@ from distutils.dir_util import copy_tree
 import os
 import json
 import liveplot
-from d3qn import Agent
+from .d3qn import Agent
 import numpy as np
 import matplotlib.pyplot as plt
 from gym.wrappers import Monitor
@@ -86,7 +86,7 @@ if __name__ == '__main__':
                 if last100Filled:
                     m, s = divmod(int(time.time() - start_time), 60)
                     h, m = divmod(m, 60)
-                    print ("EP " + str(i) + " - " + format(episode_step + 1) + "/" + str(steps) + " Episode steps - last100 Steps : " + str((sum(last100Scores) / len(last100Scores))) + " - Cumulated R: " + str(score) + "   Eps=" + str(round(agent.epsilon, 2)) + "     Time: %d:%02d:%02d" % (h, m, s))
+                    print(("EP " + str(i) + " - " + format(episode_step + 1) + "/" + str(steps) + " Episode steps - last100 Steps : " + str((sum(last100Scores) / len(last100Scores))) + " - Cumulated R: " + str(score) + "   Eps=" + str(round(agent.epsilon, 2)) + "     Time: %d:%02d:%02d" % (h, m, s)))
                     if (i)%100==0:
                         agent.save_Model(path)
                         env._flush()
@@ -103,7 +103,7 @@ if __name__ == '__main__':
         episodes.append(i)
 
         # avg_score = np.mean(score[-100:])
-        print('Episode', i , 'score', score, "Steps", stepCounter)
+        print(('Episode', i , 'score', score, "Steps", stepCounter))
         if i % 10 == 0:
             plotter.plot(env)
     env.close()

@@ -2,7 +2,7 @@ import gym
 import logging
 import tensorflow as tf
 import numpy as np
-from ddqn import*
+from .ddqn import*
 from gym.wrappers import Monitor
 import gym_gazebo
 

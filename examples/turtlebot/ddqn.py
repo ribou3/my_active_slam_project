@@ -49,14 +49,14 @@ class DeepQNetwork(Model):
         with tf.GradientTape() as tape:
             q_eval_arr = self.evaluation_network(states)
             q_eval = tf.reduce_max(q_eval_arr,axis=1)
-            print("q_eval: {}".format(q_eval))
+            print(("q_eval: {}".format(q_eval)))
             if self.enable_DDQN == True:
                 # Double Deep Q-Network
                 q_values = self.evaluation_network(nextStates)
                 q_values_actions = tf.argmax(q_values,axis=1)
                 target_q_values = self.target_network(nextStates)
                 # discount_factor = target_q_values[range(self.batch_size),q_values_actions]
-                indice = tf.stack([range(self.batch_size),q_values_actions],axis=1)
+                indice = tf.stack([list(range(self.batch_size)),q_values_actions],axis=1)
                 discount_factor = tf.gather_nd(target_q_values,indice)
             else:
                 # Deep Q-Network
@@ -65,11 +65,11 @@ class DeepQNetwork(Model):
             
              # Q function
             q_target = rewards + self.gamma * discount_factor
-            print("q_target: {}".format(q_target))
+            print(("q_target: {}".format(q_target)))
             loss = mse(q_eval,q_target)
         
         gradients_of_network = tape.gradient(loss,self.evaluation_network)
-        self.opt.apply_gradients(zip(gradients_of_network, self.evaluation_network))
+        self.opt.apply_gradients(list(zip(gradients_of_network, self.evaluation_network)))
         self.target_update_counter += 1
         # DQN - Frozen update
         if self.target_update_counter % self.target_update_cycle == 0:

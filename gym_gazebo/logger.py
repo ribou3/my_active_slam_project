@@ -17,19 +17,19 @@ def set_level(level):
 
 def debug(msg, *args):
     if MIN_LEVEL <= DEBUG:
-        print('%s: %s'%('DEBUG', msg % args))
+        print(('%s: %s'%('DEBUG', msg % args)))
 
 def info(msg, *args):
     if MIN_LEVEL <= INFO:
-        print('%s: %s'%('INFO', msg % args))
+        print(('%s: %s'%('INFO', msg % args)))
 
 def warn(msg, *args):
     if MIN_LEVEL <= WARN:
-        print(colorize('%s: %s'%('WARN', msg % args), 'yellow'))
+        print((colorize('%s: %s'%('WARN', msg % args), 'yellow')))
 
 def error(msg, *args):
     if MIN_LEVEL <= ERROR:
-        print(colorize('%s: %s'%('ERROR', msg % args), 'red'))
+        print((colorize('%s: %s'%('ERROR', msg % args), 'red')))
 
 # DEPRECATED:
 setLevel = set_level

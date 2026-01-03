@@ -110,7 +110,7 @@ if __name__ == '__main__':
     start_time = time.time()
 
     #start iterating from 'current epoch'.
-    for epoch in xrange(current_epoch+1, epochs+1, 1):
+    for epoch in range(current_epoch+1, epochs+1, 1):
         observation = env.reset()
         # print(observation.shape)
         observation = concatenate_elements(observation)
@@ -152,11 +152,11 @@ if __name__ == '__main__':
                     last100Filled = True
                     last100ScoresIndex = 0
                 if not last100Filled:
-                    print ("EP " + str(epoch) + " - " + format(episode_step + 1) + "/" + str(steps) + " Episode steps "+ "Cumulated rewards"+ str(cumulated_reward) +"  Exploration=" + str(round(explorationRate, 2)))
+                    print(("EP " + str(epoch) + " - " + format(episode_step + 1) + "/" + str(steps) + " Episode steps "+ "Cumulated rewards"+ str(cumulated_reward) +"  Exploration=" + str(round(explorationRate, 2))))
                 else :
                     m, s = divmod(int(time.time() - start_time), 60)
                     h, m = divmod(m, 60)
-                    print ("EP " + str(epoch) + " - " + format(episode_step + 1) + "/" + str(steps) + " Episode steps - last100 Steps : " + str((sum(last100Scores) / len(last100Scores))) + " - Cumulated R: " + str(cumulated_reward) + "   Eps=" + str(round(explorationRate, 2)) + "     Time: %d:%02d:%02d" % (h, m, s))
+                    print(("EP " + str(epoch) + " - " + format(episode_step + 1) + "/" + str(steps) + " Episode steps - last100 Steps : " + str((sum(last100Scores) / len(last100Scores))) + " - Cumulated R: " + str(cumulated_reward) + "   Eps=" + str(round(explorationRate, 2)) + "     Time: %d:%02d:%02d" % (h, m, s)))
                     if (epoch)%100==0:
                         #save model weights and monitoring data every 100 epochs.
                         deepQ.saveModel(path+str(epoch)+'.h5')
@@ -165,7 +165,7 @@ if __name__ == '__main__':
                         #save simulation parameters.
                         parameter_keys = ['epochs','steps','updateTargetNetwork','explorationRate','minibatch_size','learnStart','learningRate','discountFactor','memorySize','network_inputs','network_outputs','network_structure','current_epoch']
                         parameter_values = [epochs, steps, updateTargetNetwork, explorationRate, minibatch_size, learnStart, learningRate, discountFactor, memorySize, network_inputs, network_outputs, network_structure, epoch]
-                        parameter_dictionary = dict(zip(parameter_keys, parameter_values))
+                        parameter_dictionary = dict(list(zip(parameter_keys, parameter_values)))
                         with open(path+str(epoch)+'.json', 'w') as outfile:
                             json.dump(parameter_dictionary, outfile)
 

@@ -29,8 +29,8 @@ class GazeboEnv(gym.Env):
         #
         # self.ros_master_uri = os.environ["ROS_MASTER_URI"];
 
-        print("ROS_MASTER_URI=http://localhost:"+ self.port + "\n")
-        print("GAZEBO_MASTER_URI=http://localhost:"+self.port_gazebo + "\n")
+        print(("ROS_MASTER_URI=http://localhost:"+ self.port + "\n"))
+        print(("GAZEBO_MASTER_URI=http://localhost:"+self.port_gazebo + "\n"))
 
         # self.port = os.environ.get("ROS_PORT_SIM", "11311")
         ros_path = os.path.dirname(subprocess.check_output(["which", "roscore"]))

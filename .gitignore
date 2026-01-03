@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+*.egg-info/
+
+# ROS / Colcon (念のため)
+build/
+install/
+log/
+
+# Editors
+.vscode/
+.idea/
+
+# Backup files visible in your tree
+*.bak
+
+# Large models (Optional: モデルファイルが100MBを超える場合は除外推奨)
+# *.h5

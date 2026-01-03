@@ -14,7 +14,7 @@ import sys
 from sensor_msgs.msg import LaserScan
 
 from gym.utils import seeding
-from cov_matrix_retriver import Additional_rewards_uncertainty
+from .cov_matrix_retriver import Additional_rewards_uncertainty
 def concatenate_elements(vector):
     # Assuming the input vector has more than 260 elements
     if len(vector) >= 260:

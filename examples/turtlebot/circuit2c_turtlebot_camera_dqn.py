@@ -84,7 +84,7 @@ class DeepQ:
         i = 0
         for layer in self.model.layers:
             weights = layer.get_weights()
-            print "layer ",i,": ",weights
+            print("layer ",i,": ",weights)
             i += 1
 
     def backupNetwork(self, model, backup):
@@ -280,12 +280,12 @@ if __name__ == '__main__':
     start_time = time.time()
 
     #start iterating from 'current epoch'.
-    for epoch in xrange(current_epoch+1, epochs+1, 1):
+    for epoch in range(current_epoch+1, epochs+1, 1):
         observation = env.reset()
         cumulated_reward = 0
 
         # number of timesteps
-        for t in xrange(steps):
+        for t in range(steps):
             qValues = deepQ.getQValues(observation)
 
             action = deepQ.selectAction(qValues, explorationRate)
@@ -320,9 +320,9 @@ if __name__ == '__main__':
                 m, s = divmod(int(time.time() - start_time + loadsim_seconds), 60)
                 h, m = divmod(m, 60)
                 if not last100Filled:
-                    print ("EP "+str(epoch)+" - {} steps".format(t+1)+" - CReward: "+str(round(cumulated_reward, 2))+"  Eps="+str(round(explorationRate, 2))+"  Time: %d:%02d:%02d" % (h, m, s))
+                    print(("EP "+str(epoch)+" - {} steps".format(t+1)+" - CReward: "+str(round(cumulated_reward, 2))+"  Eps="+str(round(explorationRate, 2))+"  Time: %d:%02d:%02d" % (h, m, s)))
                 else :
-                    print ("EP "+str(epoch)+" - {} steps".format(t+1)+" - last100 C_Rewards : "+str(int((sum(last100Rewards)/len(last100Rewards))))+" - CReward: "+str(round(cumulated_reward, 2))+"  Eps="+str(round(explorationRate, 2))+"  Time: %d:%02d:%02d" % (h, m, s))
+                    print(("EP "+str(epoch)+" - {} steps".format(t+1)+" - last100 C_Rewards : "+str(int((sum(last100Rewards)/len(last100Rewards))))+" - CReward: "+str(round(cumulated_reward, 2))+"  Eps="+str(round(explorationRate, 2))+"  Time: %d:%02d:%02d" % (h, m, s)))
                     #SAVE SIMULATION DATA
 
                     if (epoch)%100==0:
@@ -333,13 +333,13 @@ if __name__ == '__main__':
                         #save simulation parameters.
                         parameter_keys = ['explorationRate','minibatch_size','learnStart','learningRate','discountFactor','memorySize','network_outputs','current_epoch','stepCounter','EXPLORE','INITIAL_EPSILON','FINAL_EPSILON','loadsim_seconds']
                         parameter_values = [explorationRate, minibatch_size, learnStart, learningRate, discountFactor, memorySize, network_outputs, epoch, stepCounter, EXPLORE, INITIAL_EPSILON, FINAL_EPSILON,s]
-                        parameter_dictionary = dict(zip(parameter_keys, parameter_values))
+                        parameter_dictionary = dict(list(zip(parameter_keys, parameter_values)))
                         with open('/tmp/turtle_c2c_dqn_ep'+str(epoch)+'.json', 'w') as outfile:
                             json.dump(parameter_dictionary, outfile)
                 break
 
             stepCounter += 1
             if stepCounter % 2500 == 0:
-                print("Frames = "+str(stepCounter))
+                print(("Frames = "+str(stepCounter)))
 
     env.close()

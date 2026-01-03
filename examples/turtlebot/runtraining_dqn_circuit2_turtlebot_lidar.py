@@ -127,7 +127,7 @@ class DeepQ:
         i = 0
         for layer in self.model.layers:
             weights = layer.get_weights()
-            print "layer ",i,": ",weights
+            print("layer ",i,": ",weights)
             i += 1
 
 
@@ -258,7 +258,7 @@ def clear_monitor_files(training_dir):
     if len(files) == 0:
         return
     for file in files:
-        print file
+        print(file)
         os.unlink(file)
 
 if __name__ == '__main__':

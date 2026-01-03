@@ -87,7 +87,7 @@ def expand(lst, n):
     return lst
 
 def pause():
-    programPause = raw_input("Press the <ENTER> key to finish...")
+    programPause = input("Press the <ENTER> key to finish...")
 
 if __name__ == '__main__':
 
