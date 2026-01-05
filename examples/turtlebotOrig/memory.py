@@ -33,9 +33,7 @@ class Memory:
     def addMemory(self, state, action, reward, newState, isFinal) :
         if (self.currentPosition >= self.size - 1) :
             self.currentPosition = 0
-#        print(f"size:{self.size} len(states):{len(self.states)}")
-        if (len(self.states) > self.size) :  #
-#            print("no append")
+        if (len(self.states) > self.size) :
             self.states[self.currentPosition] = state
             self.actions[self.currentPosition] = action
             self.rewards[self.currentPosition] = reward

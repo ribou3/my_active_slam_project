@@ -30,13 +30,12 @@ def main():
     minibatch_size = 64         # 学習時のバッチサイズ
     learnStart = 64             # 学習開始までに貯めるメモリ数
 #    updateTargetNetwork = 10000 # ターゲットネットワークを更新する頻度
-    updateTargetNetwork = 1000 # ターゲットネットワークを更新する頻度
+    updateTargetNetwork = 2000 # ターゲットネットワークを更新する頻度
     learningRate = 0.00025      # 学習率
     discountFactor = 0.99       # 割引率
     # memorySize = 1000000        # リプレイバッファサイズ
-    memorySize = 64
+    memorySize = 30000
     network_inputs = 100        # Lidarの入力次元数
-#    network_inputs = 24        # Lidarの入力次元数
     network_outputs = 3         # アクション数 (前進、左、右)
     hidden_layers = [24, 24]    # 隠れ層の構造
     
@@ -101,11 +100,6 @@ def main():
                 
                 if done:
                     break # 衝突したらエピソード終了
-                del qValues
-                del action
-                del new_state
-                del reward
-                del done
 
             # エピソード終了後の処理
             # 探索率(epsilon)を減衰させる
@@ -121,7 +115,7 @@ def main():
                 os.makedirs(os.path.dirname(save_path), exist_ok=True)
                 dqn.saveModel(save_path)
                 print(f"Model saved: {save_path}")
-            gc.collect()
+        gc.collect()
 
     except KeyboardInterrupt:
         print("\nTraining interrupted by user.")

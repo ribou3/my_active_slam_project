@@ -32,9 +32,7 @@ class TurtlebotEnv(Node):
         
         # 状態空間の次元数（DeepQのnetwork_inputsと一致させる必要があります）
         self.input_dim = 100 
-#        self.input_dim = 24 
 
-    @profile
     def scan_callback(self, msg):
         """Lidarデータを受信したときに呼ばれるコールバック関数"""
         self.last_scan = msg
@@ -105,9 +103,6 @@ class TurtlebotEnv(Node):
         start_wait = time.time()
         while self.last_scan is None and rclpy.ok():
             rclpy.spin_once(self, timeout_sec=0.01)
-        #future = self.last_scan.call_async(request)    
-        #self._logger.info("Made asynchronous call") 
-        #future.add_done_callback(self.pause)    
             # 万が一データが来ない場合のタイムアウト処理（オプション）
             if time.time() - start_wait > 0.5:
                 break
@@ -134,7 +129,6 @@ class TurtlebotEnv(Node):
             
         return state_reduced, reward, done
 
-    @profile
     def reset(self):
         """
         エピソード開始時のリセット処理
@@ -147,7 +141,7 @@ class TurtlebotEnv(Node):
         self.last_scan = None
         while self.last_scan is None and rclpy.ok():
             rclpy.spin_once(self, timeout_sec=0.05)
-        
+            
         # 3. データ取得後に停止
         self.call_service(self.pause)
         

@@ -35,7 +35,6 @@ class DeepQ:
         self.learnStart = learnStart
         self.learningRate = learningRate
 
-    @profile
     def initNetworks(self, hiddenLayers):
         """
         メインネットワークとターゲットネットワークの2つを初期化します。
@@ -49,7 +48,6 @@ class DeepQ:
         targetModel = self.createModel(self.input_size, self.output_size, hiddenLayers, "LeakyReLU", self.learningRate)
         self.targetModel = targetModel
 
-    @profile
     def createRegularizedModel(self, inputs, outputs, hiddenLayers, activationType, learningRate):
         """
         L2正則化を含んだニューラルネットワークモデルを作成します。
@@ -102,7 +100,6 @@ class DeepQ:
         model.summary() # モデル構造の表示
         return model
 
-    @profile
     def createModel(self, inputs, outputs, hiddenLayers, activationType, learningRate):
         """
         標準的なニューラルネットワークモデルを作成します（正則化なし）。
@@ -165,7 +162,6 @@ class DeepQ:
             layer.set_weights(weights)
             i += 1
 
-    @profile
     def updateTargetNetwork(self):
         """
         メインモデルの重みをターゲットモデルにコピー（同期）します。
@@ -174,7 +170,6 @@ class DeepQ:
         self.backupNetwork(self.model, self.targetModel)
 
     # アクションごとのQ値を予測する
-    @profile
     def getQValues(self, state):
         """
         指定された状態（state）に対する、全アクションのQ値を予測して返します。
@@ -182,7 +177,6 @@ class DeepQ:
         predicted = self.model.predict(state.reshape(1,state.size),verbose=0)
         return predicted[0]
 
-    @profile
     def getTargetQValues(self, state):
         """
         ターゲットネットワークを使用してQ値を予測します。
@@ -193,14 +187,12 @@ class DeepQ:
 
         return predicted[0]
 
-    @profile
     def getMaxQ(self, qValues):
         """
         Q値の配列の中から最大値を返します。
         """
         return np.max(qValues)
 
-    @profile
     def getMaxIndex(self, qValues):
         """
         Q値の配列の中で最大値を持つインデックス（アクションID）を返します。
@@ -208,7 +200,6 @@ class DeepQ:
         return np.argmax(qValues)
 
     # ターゲット関数の計算
-    @profile
     def calculateTarget(self, qValuesNewState, reward, isFinal):
         """
         Bellman方程式に基づいてターゲットQ値を計算します。
@@ -222,7 +213,6 @@ class DeepQ:
             return reward + self.discountFactor * self.getMaxQ(qValuesNewState)
 
     # 最も高いQ値を持つアクションを選択する
-    @profile
     def selectAction(self, qValues, explorationRate):
         """
         ε-greedy法（イプシロン・グリーディ法）によるアクション選択。
@@ -236,7 +226,6 @@ class DeepQ:
             action = self.getMaxIndex(qValues)
         return action
 
-    @profile
     def selectActionByProbability(self, qValues, bias):
         """
         Q値に基づいた確率分布（ボルツマン分布に近い形）に従ってアクションを選択します。
@@ -346,7 +335,6 @@ class DeepQ:
         
         self.model.fit(X_batch, Y_batch, batch_size=len(X_batch), epochs=1, verbose=0)
 
-    @profile
     def saveModel(self, path):
         """
         現在のモデルをファイルに保存します。
