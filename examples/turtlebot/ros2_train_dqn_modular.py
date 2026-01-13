@@ -15,7 +15,7 @@ sys.path.insert(0, current_dir)
 from turtlebot_env import TurtlebotEnv
 import deepq # 既存のDeepQライブラリ
 
-@profile
+#@profile
 def main():
     # --- ROS 2 の初期化 ---
     rclpy.init()

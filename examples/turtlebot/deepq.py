@@ -35,7 +35,7 @@ class DeepQ:
         self.learnStart = learnStart
         self.learningRate = learningRate
 
-    @profile
+    #@profile
     def initNetworks(self, hiddenLayers):
         """
         メインネットワークとターゲットネットワークの2つを初期化します。
@@ -49,7 +49,7 @@ class DeepQ:
         targetModel = self.createModel(self.input_size, self.output_size, hiddenLayers, "LeakyReLU", self.learningRate)
         self.targetModel = targetModel
 
-    @profile
+    #@profile
     def createRegularizedModel(self, inputs, outputs, hiddenLayers, activationType, learningRate):
         """
         L2正則化を含んだニューラルネットワークモデルを作成します。
@@ -102,7 +102,7 @@ class DeepQ:
         model.summary() # モデル構造の表示
         return model
 
-    @profile
+    #@profile
     def createModel(self, inputs, outputs, hiddenLayers, activationType, learningRate):
         """
         標準的なニューラルネットワークモデルを作成します（正則化なし）。
@@ -149,7 +149,7 @@ class DeepQ:
             weights = layer.get_weights()
             print(("layer ",i,": ",weights))
             i += 1
-    @profile
+    #@profile
     def backupNetwork(self, model, backup):
         """
         あるモデル（model）の重みを、別のモデル（backup）にコピーします。
@@ -165,7 +165,7 @@ class DeepQ:
             layer.set_weights(weights)
             i += 1
 
-    @profile
+    #@profile
     def updateTargetNetwork(self):
         """
         メインモデルの重みをターゲットモデルにコピー（同期）します。
@@ -174,7 +174,7 @@ class DeepQ:
         self.backupNetwork(self.model, self.targetModel)
 
     # アクションごとのQ値を予測する
-    @profile
+    #@profile
     def getQValues(self, state):
         """
         指定された状態（state）に対する、全アクションのQ値を予測して返します。
@@ -182,7 +182,7 @@ class DeepQ:
         predicted = self.model.predict(state.reshape(1,state.size),verbose=0)
         return predicted[0]
 
-    @profile
+    #@profile
     def getTargetQValues(self, state):
         """
         ターゲットネットワークを使用してQ値を予測します。
@@ -193,14 +193,14 @@ class DeepQ:
 
         return predicted[0]
 
-    @profile
+    #@profile
     def getMaxQ(self, qValues):
         """
         Q値の配列の中から最大値を返します。
         """
         return np.max(qValues)
 
-    @profile
+    #@profile
     def getMaxIndex(self, qValues):
         """
         Q値の配列の中で最大値を持つインデックス（アクションID）を返します。
@@ -208,7 +208,7 @@ class DeepQ:
         return np.argmax(qValues)
 
     # ターゲット関数の計算
-    @profile
+    #@profile
     def calculateTarget(self, qValuesNewState, reward, isFinal):
         """
         Bellman方程式に基づいてターゲットQ値を計算します。
@@ -222,7 +222,7 @@ class DeepQ:
             return reward + self.discountFactor * self.getMaxQ(qValuesNewState)
 
     # 最も高いQ値を持つアクションを選択する
-    @profile
+    #@profile
     def selectAction(self, qValues, explorationRate):
         """
         ε-greedy法（イプシロン・グリーディ法）によるアクション選択。
@@ -236,7 +236,7 @@ class DeepQ:
             action = self.getMaxIndex(qValues)
         return action
 
-    @profile
+    #@profile
     def selectActionByProbability(self, qValues, bias):
         """
         Q値に基づいた確率分布（ボルツマン分布に近い形）に従ってアクションを選択します。
@@ -269,7 +269,7 @@ class DeepQ:
             if (rand <= value):
                 return i
             i += 1
-    @profile
+    #@profile
     def addMemory(self, state, action, reward, newState, isFinal):
         """
         1ステップの遷移（現在の状態、行動、報酬、次の状態、終了判定）を
@@ -279,7 +279,7 @@ class DeepQ:
         # デバッグ用: 追加された最新のメモリを表示
         #print((self.memory.getMemory(self.memory.getCurrentSize() - 1)))
 
-    @profile
+    #@profile
     def learnOnLastState(self):
         """
         最後に保存されたメモリのみを使って学習を行います（オンライン学習的な挙動）。
@@ -287,7 +287,7 @@ class DeepQ:
         """
         if self.memory.getCurrentSize() >= 1:
             return self.memory.getMemory(self.memory.getCurrentSize() - 1)
-    @profile
+    #@profile
     def learnOnMiniBatch(self, miniBatchSize, useTargetNetwork=True):
         """
         ミニバッチ学習（高速化修正版）
@@ -346,7 +346,7 @@ class DeepQ:
         
         self.model.fit(X_batch, Y_batch, batch_size=len(X_batch), epochs=1, verbose=0)
 
-    @profile
+    #@profile
     def saveModel(self, path):
         """
         現在のモデルをファイルに保存します。

@@ -11,86 +11,89 @@ class TurtlebotEnv(Node):
     """
     ROS 2 と Gazebo のインターフェースを担当するクラス。
     OpenAI Gym のような step(), reset() メソッドを提供します。
+    論文の仕様に基づき、0.1秒ごとに一時停止して思考する「離散時間ステップ」を実装しています。
     """
     def __init__(self):
         super().__init__('turtlebot_env_node')
 
         # --- 通信のセットアップ ---
-        # 速度指令パブリッシャー
-#        self.vel_pub = self.create_publisher(Twist, '/cmd_vel', 10)
-        self.vel_pub = self.create_publisher(Twist, '/cmd_vel', 50)
-        # Lidarサブスクライバー
+        self.vel_pub = self.create_publisher(Twist, '/cmd_vel', 10)
         self.scan_sub = self.create_subscription(LaserScan, '/scan', self.scan_callback, 10)
         
-        # Gazebo制御用クライアント (物理演算の一時停止・再開・リセット)
         self.unpause = self.create_client(Empty, '/unpause_physics')
         self.pause = self.create_client(Empty, '/pause_physics')
         self.reset_sim = self.create_client(Empty, '/reset_simulation')
         
-        # 受信した最新のスキャンデータを保持する変数
         self.last_scan = None
-        
-        # 状態空間の次元数（DeepQのnetwork_inputsと一致させる必要があります）
         self.input_dim = 100 
-#        self.input_dim = 24 
 
-    @profile
+        self.get_logger().info('TurtlebotEnv Node has been initialized.')
+
     def scan_callback(self, msg):
-        """Lidarデータを受信したときに呼ばれるコールバック関数"""
         self.last_scan = msg
-    @profile
+
     def call_service(self, client):
-        """
-        サービス呼び出し用ヘルパー関数。
-        通信待ちでフリーズしないよう、タイムアウトとFutureを使用します。
-        """
         if not client.wait_for_service(timeout_sec=1.0):
             self.get_logger().warn(f'Service {client.srv_name} not available')
             return
-        
         req = Empty.Request()
         future = client.call_async(req)
-        # 完了するまでスピン（最大1秒）
         rclpy.spin_until_future_complete(self, future, timeout_sec=1.0)
 
-    @profile
+    # --- 以前の360度ダウンサンプリング（参考用としてコメントアウト） ---
+    # def process_scan(self, scan_msg):
+    #     if scan_msg is None: return np.zeros(self.input_dim)
+    #     state = np.array(scan_msg.ranges)
+    #     state[np.isinf(state)] = 3.5
+    #     state[np.isnan(state)] = 3.5
+    #     indices = np.linspace(0, len(state)-1, self.input_dim).astype(int)
+    #     state_reduced = state[indices]
+    #     return state_reduced
+
     def process_scan(self, scan_msg):
         """
-        生のLidarデータをニューラルネットワークの入力形式に変換します。
+        論文準拠：前方180度のみを抽出し、左右の並びを正正。
+        論文では前方の180度視野（FOV）に等間隔に配置されたn個のレーザー（n=100）を使用します。
         """
-        if scan_msg is None:
-            return np.zeros(self.input_dim)
-            
-        # 無限遠（検知なし）を3.5mに置換
-        state = np.array(scan_msg.ranges)
-        state[np.isinf(state)] = 3.5
-        state[np.isnan(state)] = 3.5
+        if scan_msg is None: return np.zeros(self.input_dim)
         
-        # データのダウンサンプリング（全データを100個に間引く）
-        # これにより計算量を減らし、学習を安定させます
-        indices = np.linspace(0, len(state)-1, self.input_dim).astype(int)
-        state_reduced = state[indices]
+        raw_ranges = np.array(scan_msg.ranges)
         
-        return state_reduced
+        # TB3のインデックス: 0(前), 90(左), 180(後), 270(右)
+        # 配列を [左90度 ... 正面(0) ... 右90度] の順に並べることでNNに左右を教えます。
+        indices_180 = np.concatenate([
+            np.arange(90, -1, -1),   # 左90度から正面(0)へ
+            np.arange(359, 269, -1)  # 正面から右90度(270)へ
+        ])
+        state_180 = raw_ranges[indices_180]
+        
+        # 無限遠などを 3.5m に置換
+        state_180[np.isinf(state_180)] = 3.5
+        state_180[np.isnan(state_180)] = 3.5
+        
+        # 100個にダウンサンプリング
+        resampled_indices = np.linspace(0, len(state_180)-1, self.input_dim).astype(int)
+        return state_180[resampled_indices]
 
-    @profile
+    def check_collision(self, state_reduced):
+        valid_distances = state_reduced[state_reduced > 0.13]
+        if len(valid_distances) > 0:
+            min_dist = np.min(valid_distances)
+            # 論文準拠の衝突閾値 0.2m
+            return bool(min_dist < 0.20), min_dist
+        return False, 3.5
+
     def step(self, action):
         """
-        1ステップ実行します: 行動 -> 物理進行 -> 観測 -> 停止
-        
-        Returns:
-            state (np.array): 次の状態
-            reward (float): 報酬
-            done (bool): 終了判定（衝突など）
+        1ステップ実行: 物理演算再開 -> 0.1秒進行 -> 停止 -> 観測
         """
         # --- PHASE 1: 物理演算の再開と行動の送信 ---
-        self.last_scan = None # 古いデータを捨てる
         self.call_service(self.unpause)
         
-        # 行動の決定（離散アクション）
         vel = Twist()
+        # 論文の設定値に近い速度 a1=0.3, a2=a3=0.05
         if action == 0:   # 前進
-            vel.linear.x = 0.2
+            vel.linear.x = 0.3 
         elif action == 1: # 左回転
             vel.linear.x = 0.05
             vel.angular.z = 0.3
@@ -100,55 +103,50 @@ class TurtlebotEnv(Node):
             
         self.vel_pub.publish(vel)
 
-        # --- PHASE 2: 新しいセンサーデータの待機 ---
-        # 物理演算が動いている間に、次のLidarデータが来るのを待ちます
-        start_wait = time.time()
-        while self.last_scan is None and rclpy.ok():
-            rclpy.spin_once(self, timeout_sec=0.01)
-        #future = self.last_scan.call_async(request)    
-        #self._logger.info("Made asynchronous call") 
-        #future.add_done_callback(self.pause)    
-            # 万が一データが来ない場合のタイムアウト処理（オプション）
-            if time.time() - start_wait > 0.5:
+        # --- PHASE 2: 固定時間の進行 (シミュレーション時刻ベース) ---
+        # Gazeboの倍速（RTF）に関わらず、正確にシミュレーション上の0.1秒分だけ移動させます。
+        # 論文のアクション適用時間は0.1秒です。
+        start_sim_time = self.get_clock().now()
+        while True:
+            rclpy.spin_once(self, timeout_sec=0.001)
+            current_sim_time = self.get_clock().now()
+            elapsed_sim_time = (current_sim_time - start_sim_time).nanoseconds / 1e9
+            
+            # 0.1秒に戻しました（0.05秒だとRTF6倍速環境では制御が間に合わないため）
+            if elapsed_sim_time >= 0.1:
                 break
         
         # --- PHASE 3: 物理演算の停止 ---
-        # データを受け取ったら即座にシミュレーションを止め、計算時間を確保します
         self.call_service(self.pause)
 
         # --- PHASE 4: 状態の処理と報酬計算 ---
         state_reduced = self.process_scan(self.last_scan)
+        done, min_dist = self.check_collision(state_reduced)
         
-        # 衝突判定: 最も近い障害物が0.25m未満なら衝突とみなす
-        min_distance = np.min(state_reduced)
-        done = bool(min_distance < 0.25)
-        
-        # 報酬関数の定義
+        # 報酬関数の定義（論文準拠）
         if not done:
             if action == 0:
-                reward = 1.0  # 前進できているならプラス
+                reward = 1.0     # 前進は+1.0
             else:
-                reward = -0.05 # 回転は少しペナルティ（直進を推奨するため）
+                reward = -0.05   # 回転は-0.05
         else:
-            reward = -100.0 # 衝突時は大きなペナルティ
+            reward = -100.0      # 衝突は-100.0
             
         return state_reduced, reward, done
 
-    @profile
     def reset(self):
         """
-        エピソード開始時のリセット処理
+        エピソード開始時のリセット処理。
         """
-        # 1. 物理を動かしてからリセット（ROS 2 Gazeboのバグ回避のおまじない）
         self.call_service(self.unpause)
         self.call_service(self.reset_sim)
         
-        # 2. リセット直後のデータが来るのを待つ
+        stop_vel = Twist()
+        self.vel_pub.publish(stop_vel)
+        
         self.last_scan = None
         while self.last_scan is None and rclpy.ok():
             rclpy.spin_once(self, timeout_sec=0.05)
         
-        # 3. データ取得後に停止
         self.call_service(self.pause)
-        
         return self.process_scan(self.last_scan)
